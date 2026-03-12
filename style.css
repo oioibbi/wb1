@@ -1,0 +1,265 @@
+:root {
+  --bg: #0b0c10;
+  --panel: #11131a;
+  --text: #e9ecf1;
+  --muted: #a4acb9;
+  --border: rgba(255, 255, 255, 0.12);
+  --primary: #6ee7ff;
+  --primary2: #8b5cf6;
+  --danger: #ff5c7a;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --radius: 16px;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f7f7fb;
+    --panel: #ffffff;
+    --text: #12131a;
+    --muted: #5b6270;
+    --border: rgba(0, 0, 0, 0.1);
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  }
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Helvetica,
+    Arial,
+    "Apple Color Emoji",
+    "Segoe UI Emoji";
+  background:
+    radial-gradient(1000px 600px at 20% 10%, rgba(139, 92, 246, 0.25), transparent 60%),
+    radial-gradient(900px 700px at 90% 20%, rgba(110, 231, 255, 0.22), transparent 55%),
+    radial-gradient(900px 700px at 40% 100%, rgba(255, 92, 122, 0.14), transparent 55%),
+    var(--bg);
+  color: var(--text);
+}
+
+#app {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 40px 20px 56px;
+}
+
+h1 {
+  margin: 0 0 10px 0;
+  font-size: 40px;
+  letter-spacing: -0.02em;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.small {
+  font-size: 13px;
+}
+
+.panel {
+  margin-top: 18px;
+  padding: 18px;
+  background: color-mix(in oklab, var(--panel), transparent 0%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 10px;
+  border-radius: 12px;
+  user-select: none;
+}
+
+.row:hover {
+  background: color-mix(in oklab, var(--panel), rgba(255, 255, 255, 0.06) 10%);
+}
+
+.row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.row-title {
+  font-weight: 650;
+}
+
+.row-desc {
+  font-size: 13px;
+}
+
+.row-control input[type="checkbox"] {
+  width: 44px;
+  height: 24px;
+  accent-color: color-mix(in oklab, var(--primary), var(--primary2) 35%);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 14px 0;
+}
+
+.label {
+  font-weight: 650;
+}
+
+.chips {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.segmented {
+  margin-top: 10px;
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--panel), rgba(255, 255, 255, 0.04) 10%);
+}
+
+button.seg {
+  border: 0;
+  border-right: 1px solid var(--border);
+  border-radius: 0;
+  padding: 10px 12px;
+  background: transparent;
+}
+
+button.seg:last-child {
+  border-right: 0;
+}
+
+button.seg.active {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--primary), transparent 20%),
+    color-mix(in oklab, var(--primary2), transparent 25%)
+  );
+  color: #061018;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--panel), rgba(255, 255, 255, 0.06) 10%);
+  cursor: pointer;
+  user-select: none;
+}
+
+.chip input {
+  width: 16px;
+  height: 16px;
+  accent-color: color-mix(in oklab, var(--primary), var(--primary2) 35%);
+}
+
+.buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+button {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-weight: 650;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text);
+}
+
+button.primary {
+  border: 0;
+  background: linear-gradient(90deg, var(--primary), var(--primary2));
+  color: #061018;
+}
+
+button.secondary {
+  background: color-mix(in oklab, var(--panel), rgba(255, 255, 255, 0.08) 10%);
+}
+
+button.ghost {
+  border-color: color-mix(in oklab, var(--border), rgba(255, 255, 255, 0.2) 40%);
+}
+
+.result,
+.last-pick {
+  margin-top: 18px;
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--panel), rgba(255, 255, 255, 0.06) 10%);
+}
+
+.value {
+  display: inline-block;
+  margin-top: 8px;
+  word-break: break-word;
+  color: color-mix(in oklab, var(--primary), var(--primary2) 35%);
+  text-decoration: none;
+}
+
+.value:hover {
+  text-decoration: underline;
+}
+
+.confirm-row {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.hidden {
+  display: none;
+}
+
+.footer {
+  margin-top: 18px;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 110px;
+  margin-top: 10px;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--panel), rgba(255, 255, 255, 0.04) 10%);
+  color: var(--text);
+  resize: vertical;
+  outline: none;
+}
+
+.textarea:focus {
+  border-color: color-mix(in oklab, var(--primary), var(--primary2) 35%);
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.95em;
+}

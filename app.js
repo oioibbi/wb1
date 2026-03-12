@@ -7,9 +7,10 @@
 
   /**
    * Built-in allow-list.
-   * You can edit this list, or import custom sites in the UI.
+   * You can edit this list, import custom sites in the UI,
+   * or provide `sites-extra.txt` in the repo root for large lists.
    */
-  const SITES = [
+  const BUILTIN_SITES = [
     // Chinese / Zh sites (tagged with lang-zh for 偏向中文站点)
     { url: "https://zh.wikipedia.org/", name: "维基百科（中文）", tags: ["wiki", "education", "lang-zh"], safe: true },
     { url: "https://zh.wiktionary.org/", name: "维基词典（中文）", tags: ["wiki", "education", "lang-zh"], safe: true },
@@ -87,7 +88,8 @@
     biasMode: "global", // "global" | "zh"
     categoryTags: new Set(),
     customSites: { sites: [] },
-    recentUrls: []
+    recentUrls: [],
+    extraSites: { sites: [] }
   };
 
   const ALL_EXCLUDABLE_TAGS = [
@@ -393,13 +395,29 @@
   }
 
   function getAllSites(state) {
-    const base = SITES;
+    const base = [...BUILTIN_SITES, ...state.extraSites.sites];
     if (!state.includeCustomSites) return base;
     const customSites = state.customSites.sites.map((s) => ({
       ...s,
       safe: state.treatCustomAsSafe ? true : Boolean(s.safe)
     }));
     return [...base, ...customSites];
+  }
+
+  async function loadExtraSitesFromFile() {
+    // Only works when hosted (http/https). `file://` cannot reliably fetch.
+    if (location.protocol !== "http:" && location.protocol !== "https:") return [];
+    try {
+      // cache-bust so updates appear quickly after deploy
+      const res = await fetch(`./sites-extra.txt?v=${Date.now()}`, { cache: "no-store" });
+      if (!res.ok) return [];
+      const text = await res.text();
+      const parsed = parseUrlsFromText(text);
+      // External lists default to not-safe; users can disable 安全模式 to include them.
+      return parsed.map((s) => ({ url: s.url, tags: s.tags ?? ["custom"], safe: false }));
+    } catch {
+      return [];
+    }
   }
 
   function render(app) {
@@ -642,9 +660,35 @@
       confirmRow.classList.add("hidden");
     });
 
-    const footer = el("p", { class: "footer muted" }, ["提示：这是纯静态页面；如果你只双击打开也能用。"]);
+    const footer = el("p", { class: "footer muted" }, [
+      "内置站点 ",
+      String(BUILTIN_SITES.length),
+      " 个；外部站点 ",
+      el("span", { id: "extra-count" }, [String(state.extraSites.sites.length)]),
+      " 个；自定义站点 ",
+      String(state.customSites.sites.length),
+      " 个。"
+    ]);
 
     app.append(title, subtitle, lastPick, controls, buttons, result, confirmRow, footer);
+
+    // Load large external lists from `sites-extra.txt` (hosted only).
+    loadExtraSitesFromFile().then((extra) => {
+      if (!Array.isArray(extra) || extra.length === 0) return;
+      // Merge & de-dupe against builtin/custom by url.
+      const seen = new Set(BUILTIN_SITES.map((s) => s.url));
+      for (const s of state.customSites.sites) seen.add(s.url);
+      const merged = [];
+      for (const s of extra) {
+        if (!s?.url || typeof s.url !== "string") continue;
+        if (seen.has(s.url)) continue;
+        seen.add(s.url);
+        merged.push(s);
+      }
+      state.extraSites.sites = merged;
+      const node = footer.querySelector("#extra-count");
+      if (node) node.textContent = String(state.extraSites.sites.length);
+    });
   }
 
   const app = document.querySelector("#app");

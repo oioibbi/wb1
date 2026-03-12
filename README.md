@@ -60,3 +60,5 @@ python -m http.server 5173
 这是一个纯静态站点：把整个文件夹部署到任何静态托管都行（例如 GitHub Pages / Cloudflare Pages / Netlify / Vercel 静态站点）。
 
 - 如果平台需要你填“构建命令/输出目录”：通常可以留空（因为不需要构建）。
+
+备注：为了避免 GitHub Pages 上路径/大小写导致的样式丢失，样式已内联在 `index.html`；`src/style.css` 仅作为参考保留。

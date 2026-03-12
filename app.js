@@ -93,7 +93,7 @@
     recentUrls: [],
     hotSites: { sites: [] },
     extraSites: { sites: [] },
-    uiTransparency: 38
+    uiTransparency: 50
   };
 
   const ALL_EXCLUDABLE_TAGS = [

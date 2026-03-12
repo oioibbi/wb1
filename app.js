@@ -1,6 +1,8 @@
 (function () {
   "use strict";
 
+  const APP_VERSION = "2026-03-12.1";
+
   const KEY_STATE = "rw_state_v1";
   const KEY_CUSTOM_SITES = "rw_custom_sites_v1";
   const KEY_RECENT = "rw_recent_v1";
@@ -699,7 +701,9 @@
       el("span", { id: "extra-count" }, [String(state.extraSites.sites.length)]),
       " 个；自定义 ",
       String(state.customSites.sites.length),
-      " 个。"
+      " 个；版本 ",
+      APP_VERSION,
+      "。"
     ]);
 
     app.append(title, subtitle, lastPick, controls, buttons, result, confirmRow, footer);

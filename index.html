@@ -20,7 +20,14 @@
         --radius: 16px;
         --glass-rgb: 17, 19, 26;
         --glass-alpha: 0.62;
-        --glass-border: rgba(255, 255, 255, 0.18);
+        --stroke-rgb: 255, 255, 255;
+        --stroke-alpha: calc(var(--glass-alpha) * 0.28);
+        --stroke: rgba(var(--stroke-rgb), var(--stroke-alpha));
+        --soft-alpha: calc(var(--glass-alpha) * 0.22);
+        --soft: rgba(var(--glass-rgb), var(--soft-alpha));
+        --chip-alpha: calc(var(--glass-alpha) * 0.18);
+        --chip: rgba(var(--glass-rgb), var(--chip-alpha));
+        --glass-border: var(--stroke);
         --bg-dim: 0.38;
         --bg-sat: 1.1;
         --bg-blur: 0px;
@@ -36,7 +43,8 @@
           --shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
           --glass-rgb: 255, 255, 255;
           --glass-alpha: 0.72;
-          --glass-border: rgba(0, 0, 0, 0.12);
+          --stroke-rgb: 0, 0, 0;
+          --glass-border: var(--stroke);
           --bg-dim: 0.18;
           --bg-sat: 1.05;
         }
@@ -204,7 +212,7 @@
         border: 1px solid var(--glass-border);
         border-radius: 14px;
         overflow: hidden;
-        background: rgba(255, 255, 255, 0.06);
+        background: var(--soft);
       }
 
       button.seg {
@@ -235,7 +243,7 @@
         padding: 10px 12px;
         border-radius: 999px;
         border: 1px solid var(--glass-border);
-        background: rgba(255, 255, 255, 0.06);
+        background: var(--chip);
         cursor: pointer;
         user-select: none;
       }
@@ -275,7 +283,7 @@
       }
 
       button.secondary {
-        background: rgba(255, 255, 255, 0.08);
+        background: rgba(var(--glass-rgb), calc(var(--glass-alpha) * 0.26));
       }
 
       button.ghost {
@@ -288,7 +296,7 @@
         padding: 16px 18px;
         border-radius: var(--radius);
         border: 1px solid var(--glass-border);
-        background: rgba(255, 255, 255, 0.06);
+        background: var(--soft);
         backdrop-filter: blur(14px) saturate(1.18);
         -webkit-backdrop-filter: blur(14px) saturate(1.18);
       }
@@ -352,7 +360,7 @@
         padding: 10px 12px;
         border: 1px solid var(--glass-border);
         border-radius: 14px;
-        background: rgba(255, 255, 255, 0.06);
+        background: var(--soft);
         backdrop-filter: blur(14px) saturate(1.18);
         -webkit-backdrop-filter: blur(14px) saturate(1.18);
       }
@@ -364,7 +372,7 @@
         padding: 12px 12px;
         border-radius: 14px;
         border: 1px solid var(--glass-border);
-        background: rgba(255, 255, 255, 0.06);
+        background: var(--soft);
       }
 
       .slider-head {
@@ -379,9 +387,52 @@
         padding: 6px 10px;
         border-radius: 999px;
         border: 1px solid var(--glass-border);
-        background: rgba(255, 255, 255, 0.06);
+        background: var(--chip);
         color: var(--muted);
         white-space: nowrap;
+      }
+
+      details.opacity-dock {
+        position: fixed;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 14px;
+        width: min(520px, calc(100vw - 28px));
+        z-index: 30;
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        background: rgba(var(--glass-rgb), 0.72);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(14px) saturate(1.18);
+        -webkit-backdrop-filter: blur(14px) saturate(1.18);
+        overflow: hidden;
+      }
+
+      summary.opacity-dock-summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 12px;
+        cursor: pointer;
+        user-select: none;
+        font-weight: 750;
+        list-style: none;
+      }
+
+      summary.opacity-dock-summary::-webkit-details-marker {
+        display: none;
+      }
+
+      details.opacity-dock[open] summary.opacity-dock-summary {
+        border-bottom: 1px solid var(--glass-border);
+      }
+
+      details.opacity-dock .slider {
+        margin: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
       }
 
       input[type="range"] {
@@ -428,6 +479,6 @@
   <body>
     <div id="app"></div>
     <!-- Cache-bust for GitHub Pages deployments -->
-    <script src="./app.js?v=20260312-4"></script>
+    <script src="./app.js?v=20260312-5"></script>
   </body>
 </html>

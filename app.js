@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const APP_VERSION = "2026-03-12.4";
+  const APP_VERSION = "2026-03-12.5";
 
   const KEY_STATE = "rw_state_v1";
   const KEY_CUSTOM_SITES = "rw_custom_sites_v1";
@@ -93,7 +93,7 @@
     recentUrls: [],
     hotSites: { sites: [] },
     extraSites: { sites: [] },
-    uiOpacity: 62
+    uiTransparency: 38
   };
 
   const ALL_EXCLUDABLE_TAGS = [
@@ -398,7 +398,12 @@
       state.excludedTags = new Set(Array.isArray(persisted.excludedTags) ? persisted.excludedTags : []);
       state.biasMode = persisted.biasMode === "zh" ? "zh" : "global";
       state.categoryTags = new Set(Array.isArray(persisted.categoryTags) ? persisted.categoryTags : []);
-      if (typeof persisted.uiOpacity === "number") state.uiOpacity = clampInt(persisted.uiOpacity, 0, 100);
+      if (typeof persisted.uiTransparency === "number") {
+        state.uiTransparency = clampInt(persisted.uiTransparency, 0, 99);
+      } else if (typeof persisted.uiOpacity === "number") {
+        // Back-compat: older versions stored "opacity" (0-100). Convert to transparency (0-99).
+        state.uiTransparency = clampInt(100 - persisted.uiOpacity, 0, 99);
+      }
     }
     state.customSites.sites = loadCustomSites();
     state.recentUrls = loadRecentUrls();
@@ -414,7 +419,7 @@
       treatCustomAsSafe: state.treatCustomAsSafe,
       biasMode: state.biasMode,
       categoryTags: [...state.categoryTags],
-      uiOpacity: state.uiOpacity
+      uiTransparency: state.uiTransparency
     });
   }
 
@@ -428,15 +433,11 @@
     return a + (b - a) * t;
   }
 
-  function applyUiOpacity(value0to100) {
-    const v = clampInt(value0to100, 0, 100);
-    const t = v / 100;
-    // 0 => more transparent; 100 => more opaque
-    const glassAlpha = lerp(0.42, 0.86, t);
-    // keep readability when very transparent; reveal photo more when opaque
-    const bgDim = lerp(0.48, 0.18, t);
-    document.documentElement.style.setProperty("--glass-alpha", glassAlpha.toFixed(3));
-    document.documentElement.style.setProperty("--bg-dim", bgDim.toFixed(3));
+  function applyUiTransparency(value0to99) {
+    const t = clampInt(value0to99, 0, 99);
+    // "透明度": 0% => fully opaque; 99% => almost fully transparent
+    const alpha = Math.max(0.01, 1 - t / 100);
+    document.documentElement.style.setProperty("--glass-alpha", alpha.toFixed(3));
   }
 
   function getAllSites(state) {
@@ -487,7 +488,7 @@
   function render(app) {
     const state = structuredClone(DEFAULT_STATE);
     hydrateFromStorage(state);
-    applyUiOpacity(state.uiOpacity);
+    applyUiTransparency(state.uiTransparency);
 
     const title = el("h1", {}, ["随机网站"]);
     const subtitle = el("p", { class: "muted" }, [
@@ -504,20 +505,22 @@
     const sectionButtons = el("div", { class: "buttons buttons-tight" }, [expandAllBtn, collapseAllBtn]);
     controls.append(sectionButtons);
 
-    const opacityValue = el("span", { class: "pill" }, [`不透明度 ${state.uiOpacity}%`]);
-    const opacityInput = /** @type {HTMLInputElement} */ (
-      el("input", { type: "range", min: "0", max: "100", step: "1", value: String(state.uiOpacity) })
+    const transparencyValue = el("span", { class: "pill" }, [`透明度 ${state.uiTransparency}%`]);
+    const dockPill = el("span", { class: "pill" }, [`${state.uiTransparency}%`]);
+    const transparencyInput = /** @type {HTMLInputElement} */ (
+      el("input", { type: "range", min: "0", max: "99", step: "1", value: String(state.uiTransparency) })
     );
-    const opacityHint = el("div", { class: "muted small" }, ["更透明 ←  → 更不透明（背景遮罩会自动配合调整）"]);
-    const opacityBox = el("div", { class: "slider" }, [
-      el("div", { class: "slider-head" }, [el("div", { class: "label" }, ["界面透明度"]), opacityValue]),
-      opacityInput,
-      opacityHint
+    const transparencyHint = el("div", { class: "muted small" }, ["0% 更实 / 99% 更透"]);
+    const transparencyBox = el("div", { class: "slider" }, [
+      el("div", { class: "slider-head" }, [el("div", { class: "label" }, ["透明度"]), transparencyValue]),
+      transparencyInput,
+      transparencyHint
     ]);
-    opacityInput.addEventListener("input", () => {
-      state.uiOpacity = clampInt(opacityInput.value, 0, 100);
-      opacityValue.textContent = `不透明度 ${state.uiOpacity}%`;
-      applyUiOpacity(state.uiOpacity);
+    transparencyInput.addEventListener("input", () => {
+      state.uiTransparency = clampInt(transparencyInput.value, 0, 99);
+      transparencyValue.textContent = `透明度 ${state.uiTransparency}%`;
+      dockPill.textContent = `${state.uiTransparency}%`;
+      applyUiTransparency(state.uiTransparency);
       persistState(state);
     });
 
@@ -548,8 +551,6 @@
     );
 
     const basicSection = section("基础设置", true, [safeMode, confirmBeforeOpen, openInNewTab, includeCustom, treatCustomAsSafe]);
-
-    basicSection.insertBefore(opacityBox, basicSection.children[1] ?? null);
 
     const biasRow = el("div", { class: "segmented" }, []);
     const biasGlobal = segmentedButton("全网站点 (global)", state.biasMode === "global", () => {
@@ -873,7 +874,11 @@
     const left = el("div", { class: "left" }, [controls]);
     const layout = el("div", { class: "layout" }, [left, right]);
 
-    app.append(header, layout);
+    const opacityDock = el("details", { class: "opacity-dock" }, []);
+    const dockSummary = el("summary", { class: "opacity-dock-summary" }, ["透明度", dockPill]);
+    opacityDock.append(dockSummary, transparencyBox);
+
+    app.append(header, layout, opacityDock);
 
     // Merge & de-dupe against builtin/custom by url.
     const seen = new Set(BUILTIN_SITES.map((s) => s.url));

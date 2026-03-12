@@ -18,6 +18,12 @@
         --danger: #ff5c7a;
         --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
         --radius: 16px;
+        --glass-rgb: 17, 19, 26;
+        --glass-alpha: 0.62;
+        --glass-border: rgba(255, 255, 255, 0.18);
+        --bg-dim: 0.38;
+        --bg-sat: 1.1;
+        --bg-blur: 0px;
       }
 
       @media (prefers-color-scheme: light) {
@@ -28,6 +34,11 @@
           --muted: #5b6270;
           --border: rgba(0, 0, 0, 0.1);
           --shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+          --glass-rgb: 255, 255, 255;
+          --glass-alpha: 0.72;
+          --glass-border: rgba(0, 0, 0, 0.12);
+          --bg-dim: 0.18;
+          --bg-sat: 1.05;
         }
       }
 
@@ -40,16 +51,66 @@
         margin: 0;
         font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji",
           "Segoe UI Emoji";
-        background: radial-gradient(1000px 600px at 20% 10%, rgba(139, 92, 246, 0.25), transparent 60%),
-          radial-gradient(900px 700px at 90% 20%, rgba(110, 231, 255, 0.22), transparent 55%),
-          radial-gradient(900px 700px at 40% 100%, rgba(255, 92, 122, 0.14), transparent 55%), var(--bg);
+        background: var(--bg);
         color: var(--text);
+      }
+
+      /* Photo background layer */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -2;
+        background-image: url("./assets/bg.jpg");
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+        transform: scale(1.02);
+        filter: saturate(var(--bg-sat)) blur(var(--bg-blur));
+        opacity: 1;
+      }
+
+      /* Readability overlay (keeps photo visible) */
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background: radial-gradient(1100px 720px at 18% 8%, rgba(139, 92, 246, 0.26), transparent 62%),
+          radial-gradient(1000px 820px at 92% 22%, rgba(110, 231, 255, 0.22), transparent 58%),
+          radial-gradient(1100px 820px at 45% 105%, rgba(255, 92, 122, 0.16), transparent 58%),
+          rgba(0, 0, 0, var(--bg-dim));
+        pointer-events: none;
       }
 
       #app {
         max-width: 920px;
         margin: 0 auto;
         padding: 40px 20px 56px;
+      }
+
+      .header {
+        margin-bottom: 16px;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+
+      @media (min-width: 980px) {
+        #app {
+          max-width: 1100px;
+        }
+        .layout {
+          grid-template-columns: 1.15fr 0.85fr;
+          align-items: start;
+        }
+        .right {
+          position: sticky;
+          top: 14px;
+        }
       }
 
       h1 {
@@ -69,10 +130,21 @@
       .panel {
         margin-top: 18px;
         padding: 18px;
-        background: color-mix(in oklab, var(--panel), transparent 0%);
-        border: 1px solid var(--border);
+        background: rgba(var(--glass-rgb), var(--glass-alpha));
+        border: 1px solid var(--glass-border);
         border-radius: var(--radius);
         box-shadow: var(--shadow);
+        backdrop-filter: blur(14px) saturate(1.18);
+        -webkit-backdrop-filter: blur(14px) saturate(1.18);
+      }
+
+      .card {
+        margin-top: 0;
+      }
+
+      .card-title {
+        font-weight: 750;
+        margin-bottom: 10px;
       }
 
       .row {
@@ -86,7 +158,7 @@
       }
 
       .row:hover {
-        background: color-mix(in oklab, var(--panel), rgba(255, 255, 255, 0.06) 10%);
+        background: rgba(255, 255, 255, 0.06);
       }
 
       .row-main {
@@ -129,10 +201,10 @@
       .segmented {
         margin-top: 10px;
         display: inline-flex;
-        border: 1px solid var(--border);
+        border: 1px solid var(--glass-border);
         border-radius: 14px;
         overflow: hidden;
-        background: color-mix(in oklab, var(--panel), rgba(255, 255, 255, 0.04) 10%);
+        background: rgba(255, 255, 255, 0.06);
       }
 
       button.seg {
@@ -162,8 +234,8 @@
         gap: 8px;
         padding: 10px 12px;
         border-radius: 999px;
-        border: 1px solid var(--border);
-        background: color-mix(in oklab, var(--panel), rgba(255, 255, 255, 0.06) 10%);
+        border: 1px solid var(--glass-border);
+        background: rgba(255, 255, 255, 0.06);
         cursor: pointer;
         user-select: none;
       }
@@ -179,6 +251,11 @@
         gap: 12px;
         flex-wrap: wrap;
         margin-top: 18px;
+      }
+
+      .buttons.buttons-tight {
+        margin-top: 10px;
+        gap: 10px;
       }
 
       button {
@@ -198,11 +275,11 @@
       }
 
       button.secondary {
-        background: color-mix(in oklab, var(--panel), rgba(255, 255, 255, 0.08) 10%);
+        background: rgba(255, 255, 255, 0.08);
       }
 
       button.ghost {
-        border-color: color-mix(in oklab, var(--border), rgba(255, 255, 255, 0.2) 40%);
+        border-color: color-mix(in oklab, var(--glass-border), rgba(255, 255, 255, 0.28) 30%);
       }
 
       .result,
@@ -210,8 +287,16 @@
         margin-top: 18px;
         padding: 16px 18px;
         border-radius: var(--radius);
-        border: 1px solid var(--border);
-        background: color-mix(in oklab, var(--panel), rgba(255, 255, 255, 0.06) 10%);
+        border: 1px solid var(--glass-border);
+        background: rgba(255, 255, 255, 0.06);
+        backdrop-filter: blur(14px) saturate(1.18);
+        -webkit-backdrop-filter: blur(14px) saturate(1.18);
+      }
+
+      .divider {
+        height: 1px;
+        background: var(--border);
+        margin: 14px 0;
       }
 
       .value {
@@ -265,9 +350,43 @@
       details.details {
         margin-top: 10px;
         padding: 10px 12px;
-        border: 1px solid var(--border);
+        border: 1px solid var(--glass-border);
         border-radius: 14px;
-        background: color-mix(in oklab, var(--panel), rgba(255, 255, 255, 0.04) 10%);
+        background: rgba(255, 255, 255, 0.06);
+        backdrop-filter: blur(14px) saturate(1.18);
+        -webkit-backdrop-filter: blur(14px) saturate(1.18);
+      }
+
+      .slider {
+        display: grid;
+        gap: 8px;
+        margin-top: 10px;
+        padding: 12px 12px;
+        border-radius: 14px;
+        border: 1px solid var(--glass-border);
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .slider-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .pill {
+        font-size: 12px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--glass-border);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        accent-color: color-mix(in oklab, var(--primary), var(--primary2) 35%);
       }
 
       summary.details-summary {
@@ -276,8 +395,28 @@
         list-style: none;
       }
 
+      details.details[open] summary.details-summary {
+        margin-bottom: 8px;
+      }
+
       summary.details-summary::-webkit-details-marker {
         display: none;
+      }
+
+      .custom-row {
+        padding: 10px 0;
+        border-top: 1px dashed color-mix(in oklab, var(--border), rgba(255, 255, 255, 0.08) 60%);
+      }
+
+      .custom-row:first-child {
+        border-top: 0;
+      }
+
+      .custom-row-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
       }
 
       code {
@@ -289,6 +428,6 @@
   <body>
     <div id="app"></div>
     <!-- Cache-bust for GitHub Pages deployments -->
-    <script src="./app.js?v=20260312-2"></script>
+    <script src="./app.js?v=20260312-4"></script>
   </body>
 </html>

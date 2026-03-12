@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const APP_VERSION = "2026-03-12.2";
+  const APP_VERSION = "2026-03-12.4";
 
   const KEY_STATE = "rw_state_v1";
   const KEY_CUSTOM_SITES = "rw_custom_sites_v1";
@@ -92,7 +92,8 @@
     customSites: { sites: [] },
     recentUrls: [],
     hotSites: { sites: [] },
-    extraSites: { sites: [] }
+    extraSites: { sites: [] },
+    uiOpacity: 62
   };
 
   const ALL_EXCLUDABLE_TAGS = [
@@ -355,6 +356,13 @@
     }
   }
 
+  function section(titleText, open, children) {
+    const details = el("details", { class: "details", ...(open ? { open: "" } : {}) }, []);
+    const summary = el("summary", { class: "details-summary" }, [titleText]);
+    details.append(summary, ...children);
+    return details;
+  }
+
   function toggleRow(label, desc, initial, onChange) {
     const input = /** @type {HTMLInputElement} */ (el("input", { type: "checkbox" }));
     input.checked = initial;
@@ -390,6 +398,7 @@
       state.excludedTags = new Set(Array.isArray(persisted.excludedTags) ? persisted.excludedTags : []);
       state.biasMode = persisted.biasMode === "zh" ? "zh" : "global";
       state.categoryTags = new Set(Array.isArray(persisted.categoryTags) ? persisted.categoryTags : []);
+      if (typeof persisted.uiOpacity === "number") state.uiOpacity = clampInt(persisted.uiOpacity, 0, 100);
     }
     state.customSites.sites = loadCustomSites();
     state.recentUrls = loadRecentUrls();
@@ -404,8 +413,30 @@
       includeCustomSites: state.includeCustomSites,
       treatCustomAsSafe: state.treatCustomAsSafe,
       biasMode: state.biasMode,
-      categoryTags: [...state.categoryTags]
+      categoryTags: [...state.categoryTags],
+      uiOpacity: state.uiOpacity
     });
+  }
+
+  function clampInt(v, min, max) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return min;
+    return Math.min(max, Math.max(min, Math.round(n)));
+  }
+
+  function lerp(a, b, t) {
+    return a + (b - a) * t;
+  }
+
+  function applyUiOpacity(value0to100) {
+    const v = clampInt(value0to100, 0, 100);
+    const t = v / 100;
+    // 0 => more transparent; 100 => more opaque
+    const glassAlpha = lerp(0.42, 0.86, t);
+    // keep readability when very transparent; reveal photo more when opaque
+    const bgDim = lerp(0.48, 0.18, t);
+    document.documentElement.style.setProperty("--glass-alpha", glassAlpha.toFixed(3));
+    document.documentElement.style.setProperty("--bg-dim", bgDim.toFixed(3));
   }
 
   function getAllSites(state) {
@@ -456,18 +487,39 @@
   function render(app) {
     const state = structuredClone(DEFAULT_STATE);
     hydrateFromStorage(state);
+    applyUiOpacity(state.uiOpacity);
 
     const title = el("h1", {}, ["随机网站"]);
     const subtitle = el("p", { class: "muted" }, [
       "说明：不可能真的“随机进入这个世界上存在的任意一个网站”。这个项目会从一份站点库里随机抽取并打开；你也可以替换/扩展站点库。"
     ]);
 
-    const lastPick = el("div", { class: "last-pick" }, [
-      el("div", { class: "label" }, ["上次抽到："]),
-      el("a", { class: "value", href: "#", rel: "noreferrer noopener" }, ["（还没有）"])
-    ]);
+    const header = el("div", { class: "header" }, [title, subtitle]);
 
-    const controls = el("div", { class: "panel" }, []);
+    const controls = el("div", { class: "panel card" }, []);
+
+    // Quick section controls (expand/collapse)
+    const expandAllBtn = el("button", { class: "ghost", type: "button" }, ["展开全部"]);
+    const collapseAllBtn = el("button", { class: "ghost", type: "button" }, ["收起全部"]);
+    const sectionButtons = el("div", { class: "buttons buttons-tight" }, [expandAllBtn, collapseAllBtn]);
+    controls.append(sectionButtons);
+
+    const opacityValue = el("span", { class: "pill" }, [`不透明度 ${state.uiOpacity}%`]);
+    const opacityInput = /** @type {HTMLInputElement} */ (
+      el("input", { type: "range", min: "0", max: "100", step: "1", value: String(state.uiOpacity) })
+    );
+    const opacityHint = el("div", { class: "muted small" }, ["更透明 ←  → 更不透明（背景遮罩会自动配合调整）"]);
+    const opacityBox = el("div", { class: "slider" }, [
+      el("div", { class: "slider-head" }, [el("div", { class: "label" }, ["界面透明度"]), opacityValue]),
+      opacityInput,
+      opacityHint
+    ]);
+    opacityInput.addEventListener("input", () => {
+      state.uiOpacity = clampInt(opacityInput.value, 0, 100);
+      opacityValue.textContent = `不透明度 ${state.uiOpacity}%`;
+      applyUiOpacity(state.uiOpacity);
+      persistState(state);
+    });
 
     const safeMode = toggleRow("安全模式（推荐）", "尽量使用更“可信/常见”的站点。", state.safeMode, (v) => {
       state.safeMode = v;
@@ -494,9 +546,11 @@
         persistState(state);
       }
     );
-    controls.append(safeMode, confirmBeforeOpen, openInNewTab, includeCustom, treatCustomAsSafe, el("hr"));
 
-    controls.append(el("div", { class: "label" }, ["随机范围（括号内为模式）："]));
+    const basicSection = section("基础设置", true, [safeMode, confirmBeforeOpen, openInNewTab, includeCustom, treatCustomAsSafe]);
+
+    basicSection.insertBefore(opacityBox, basicSection.children[1] ?? null);
+
     const biasRow = el("div", { class: "segmented" }, []);
     const biasGlobal = segmentedButton("全网站点 (global)", state.biasMode === "global", () => {
       state.biasMode = "global";
@@ -510,9 +564,7 @@
     });
     biasRow.append(biasGlobal, biasZh);
     setSegmentActive(biasRow, state.biasMode === "zh" ? 1 : 0);
-    controls.append(biasRow);
 
-    controls.append(el("div", { class: "label", style: "margin-top:12px" }, ["类别（可选，括号内为 tag）："]));
     const categories = el("div", { class: "chips" }, []);
     const allCatChip = chipToggle("全部 (all)", "all", state.categoryTags.size === 0, (checked) => {
       if (checked) {
@@ -537,23 +589,23 @@
       });
       categories.append(chip);
     }
-    controls.append(categories);
 
-    controls.append(
+    const rangeSection = section("范围与类别", true, [
+      el("div", { class: "label", style: "margin-top:6px" }, ["随机范围（模式）："]),
+      biasRow,
+      el("div", { class: "label", style: "margin-top:12px" }, ["类别（可选，括号内为 tag）："]),
+      categories,
       el("div", { class: "muted small", style: "margin-top:8px" }, [
-        "以后要加新类别：给站点打上新 tag 即可（例如在导入时写 ",
+        "要加新类别：给站点打上新 tag 即可（例如 ",
         el("code", {}, ["#novel"]),
         " / ",
         el("code", {}, ["#anime"]),
-        "）。页面按钮列表在 ",
+        "）。按钮列表在 ",
         el("code", {}, ["CATEGORY_TAGS"]),
         " 里维护。"
       ])
-    );
+    ]);
 
-    controls.append(el("hr"));
-
-    controls.append(el("div", { class: "label" }, ["排除内容（括号内为 tag）："]));
     const excludes = el("div", { class: "chips" }, []);
     for (const { tag, labelZh } of ALL_EXCLUDABLE_TAGS) {
       const chip = chipToggle(`${labelZh} (${tag})`, tag, state.excludedTags.has(tag), (checked) => {
@@ -563,22 +615,15 @@
       });
       excludes.append(chip);
     }
-    controls.append(excludes);
+    const excludeSection = section("排除内容（可选）", false, [
+      el("div", { class: "muted small" }, ["取消勾选即可“允许出现”对应内容；括号内为 tag。"]),
+      excludes
+    ]);
 
-    controls.append(el("hr"));
-    controls.append(el("div", { class: "label" }, ["自定义站点库（按分类分区添加）："]));
-    controls.append(
-      el("div", { class: "muted small" }, [
-        "把链接粘贴到对应分类里即可自动归类；括号内是英文 tag。也可使用“高级导入”手动写 ",
-        el("code", {}, ["#tag"]),
-        "。"
-      ])
-    );
-
-    const customSummary = el("div", { class: "muted small", style: "margin-top:8px" }, []);
+    // Custom library sections
+    const customSummary = el("div", { class: "muted small", style: "margin-top:6px" }, []);
     const clearAllCustomBtn = el("button", { class: "ghost", type: "button" }, ["清空全部自定义站点"]);
-    const customTopRow = el("div", { class: "buttons", style: "margin-top:10px" }, [clearAllCustomBtn]);
-    controls.append(customTopRow, customSummary);
+    const customTopRow = el("div", { class: "buttons buttons-tight", style: "margin-top:10px" }, [clearAllCustomBtn]);
 
     /** @type {Map<string, HTMLElement>} */
     const customCountNodes = new Map();
@@ -626,23 +671,15 @@
 
     const customSections = el("div", { class: "custom-sections" }, []);
     for (const { tag, labelZh } of CATEGORY_TAGS) {
-      const details = el("details", { class: "details" }, []);
       const countNode = el("span", { class: "muted small" }, ["0"]);
       customCountNodes.set(tag, countNode);
-      const summary = el("summary", { class: "details-summary" }, [
-        `${labelZh} (${tag})`,
-        " · 已添加 ",
-        countNode,
-        " 个"
-      ]);
-
       const ta = /** @type {HTMLTextAreaElement} */ (
         el("textarea", {
           class: "textarea textarea-sm",
           placeholder: "每行一个网址/域名（可选 #zh 等 tag）\n例如：\nexample.com\n#zh example.com"
         })
       );
-      const addBtn = el("button", { class: "secondary", type: "button" }, ["添加到此分类"]);
+      const addBtn = el("button", { class: "secondary", type: "button" }, ["添加"]);
       const status = el("div", { class: "muted small" }, [""]);
       addBtn.addEventListener("click", () => {
         const parsed = parseUrlsFromText(ta.value);
@@ -655,42 +692,67 @@
         ta.value = "";
       });
 
-      details.append(summary, ta, el("div", { class: "buttons", style: "margin-top:10px" }, [addBtn]), status);
-      customSections.append(details);
+      const row = el("div", { class: "custom-row" }, [
+        el("div", { class: "custom-row-head" }, [
+          el("div", { class: "label" }, [`${labelZh} (${tag})`]),
+          el("div", { class: "muted small" }, ["已添加 ", countNode, " 个"])
+        ]),
+        ta,
+        el("div", { class: "buttons buttons-tight", style: "margin-top:10px" }, [addBtn]),
+        status
+      ]);
+      customSections.append(row);
     }
-    controls.append(customSections);
 
-    const advanced = el("details", { class: "details", style: "margin-top:12px" }, []);
-    const advancedSummary = el("summary", { class: "details-summary" }, ["高级导入（手动 #tag）"]);
-    const textarea = /** @type {HTMLTextAreaElement} */ (
+    const advancedTextarea = /** @type {HTMLTextAreaElement} */ (
       el("textarea", {
         class: "textarea textarea-sm",
-        placeholder:
-          "每行一个网址/域名，可带 #tag\n例如：\n#novel #zh qidian.com\n#anime bangumi.tv\n#adult example.com"
+        placeholder: "每行一个网址/域名，可带 #tag\n例如：\n#novel #zh qidian.com\n#anime bangumi.tv\n#adult example.com"
       })
     );
-    const advancedButtons = el("div", { class: "buttons", style: "margin-top:10px" }, []);
-    const importBtn = el("button", { class: "secondary", type: "button" }, ["导入并按行内 tag 归类"]);
-    const clearBtn = el("button", { class: "ghost", type: "button" }, ["清空输入框"]);
     const advancedStatus = el("div", { class: "muted small" }, [""]);
-
+    const importBtn = el("button", { class: "secondary", type: "button" }, ["导入"]);
+    const clearBtn = el("button", { class: "ghost", type: "button" }, ["清空"]);
     importBtn.addEventListener("click", () => {
-      const parsed = parseUrlsFromText(textarea.value);
+      const parsed = parseUrlsFromText(advancedTextarea.value);
       if (parsed.length === 0) {
         advancedStatus.textContent = "没有识别到有效网址。";
         return;
       }
       upsertCustomSites(parsed, null);
       advancedStatus.textContent = `已导入 ${parsed.length} 条。`;
-      textarea.value = "";
+      advancedTextarea.value = "";
     });
     clearBtn.addEventListener("click", () => {
-      textarea.value = "";
+      advancedTextarea.value = "";
       advancedStatus.textContent = "";
     });
-    advancedButtons.append(importBtn, clearBtn);
-    advanced.append(advancedSummary, textarea, advancedButtons, advancedStatus);
-    controls.append(advanced);
+
+    const customSection = section("自定义站点库", false, [
+      el("div", { class: "muted small" }, [
+        "把链接粘到对应分类即可自动归类；也可用“高级导入”手动写 ",
+        el("code", {}, ["#tag"]),
+        "。"
+      ]),
+      customTopRow,
+      customSummary,
+      el("div", { class: "divider" }, []),
+      customSections,
+      section("高级导入（手动 #tag）", false, [
+        advancedTextarea,
+        el("div", { class: "buttons buttons-tight", style: "margin-top:10px" }, [importBtn, clearBtn]),
+        advancedStatus
+      ])
+    ]);
+
+    controls.append(basicSection, rangeSection, excludeSection, customSection);
+
+    expandAllBtn.addEventListener("click", () => {
+      for (const d of controls.querySelectorAll("details.details")) d.setAttribute("open", "");
+    });
+    collapseAllBtn.addEventListener("click", () => {
+      for (const d of controls.querySelectorAll("details.details")) d.removeAttribute("open");
+    });
 
     refreshCustomUi();
 
@@ -710,6 +772,11 @@
     confirmRow.append(confirmBtn, cancelBtn);
 
     let pendingUrl = null;
+
+    const lastPick = el("div", { class: "last-pick" }, [
+      el("div", { class: "label" }, ["上次抽到："]),
+      el("a", { class: "value", href: "#", rel: "noreferrer noopener" }, ["（还没有）"])
+    ]);
 
     function updateLast(url, name) {
       const a = lastPick.querySelector("a");
@@ -794,7 +861,19 @@
       "。"
     ]);
 
-    app.append(title, subtitle, lastPick, controls, buttons, result, confirmRow, footer);
+    const actionCard = el("div", { class: "panel card" }, [
+      el("div", { class: "card-title" }, ["开始随机"]),
+      lastPick,
+      buttons,
+      result,
+      confirmRow
+    ]);
+
+    const right = el("div", { class: "right" }, [actionCard, footer]);
+    const left = el("div", { class: "left" }, [controls]);
+    const layout = el("div", { class: "layout" }, [left, right]);
+
+    app.append(header, layout);
 
     // Merge & de-dupe against builtin/custom by url.
     const seen = new Set(BUILTIN_SITES.map((s) => s.url));

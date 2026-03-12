@@ -258,6 +258,28 @@
         border-color: color-mix(in oklab, var(--primary), var(--primary2) 35%);
       }
 
+      .textarea.textarea-sm {
+        min-height: 90px;
+      }
+
+      details.details {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: color-mix(in oklab, var(--panel), rgba(255, 255, 255, 0.04) 10%);
+      }
+
+      summary.details-summary {
+        cursor: pointer;
+        font-weight: 650;
+        list-style: none;
+      }
+
+      summary.details-summary::-webkit-details-marker {
+        display: none;
+      }
+
       code {
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         font-size: 0.95em;
@@ -267,6 +289,6 @@
   <body>
     <div id="app"></div>
     <!-- Cache-bust for GitHub Pages deployments -->
-    <script src="./app.js?v=20260312-1"></script>
+    <script src="./app.js?v=20260312-2"></script>
   </body>
 </html>

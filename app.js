@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const APP_VERSION = "2026-03-12.1";
+  const APP_VERSION = "2026-03-12.2";
 
   const KEY_STATE = "rw_state_v1";
   const KEY_CUSTOM_SITES = "rw_custom_sites_v1";
@@ -96,39 +96,39 @@
   };
 
   const ALL_EXCLUDABLE_TAGS = [
-    { tag: "adult", label: "成人内容" },
-    { tag: "gambling", label: "博彩" },
-    { tag: "crypto", label: "加密货币" },
-    { tag: "torrent", label: "下载/种子" },
-    { tag: "dating", label: "交友/约会" },
-    { tag: "social", label: "社交媒体" },
-    { tag: "news", label: "新闻" }
+    { tag: "adult", labelZh: "成人内容" },
+    { tag: "gambling", labelZh: "博彩" },
+    { tag: "crypto", labelZh: "加密货币" },
+    { tag: "torrent", labelZh: "下载/种子" },
+    { tag: "dating", labelZh: "交友/约会" },
+    { tag: "social", labelZh: "社交媒体" },
+    { tag: "news", labelZh: "新闻" }
   ];
 
   const CATEGORY_TAGS = [
-    { tag: "ai", label: "AI" },
-    { tag: "novel", label: "小说" },
-    { tag: "anime", label: "动漫" },
-    { tag: "video", label: "视频" },
-    { tag: "music", label: "音乐" },
-    { tag: "games", label: "游戏" },
-    { tag: "news", label: "新闻" },
-    { tag: "education", label: "学习" },
-    { tag: "science", label: "科学" },
-    { tag: "tools", label: "工具" },
-    { tag: "dev", label: "开发" },
-    { tag: "art", label: "艺术" },
-    { tag: "maps", label: "地图" },
-    { tag: "shopping", label: "购物" },
-    { tag: "search", label: "搜索" },
-    { tag: "social", label: "社交" },
-    { tag: "finance", label: "金融" },
-    { tag: "cloud", label: "云服务" },
-    { tag: "office", label: "办公" },
-    { tag: "gov", label: "政务" },
-    { tag: "health", label: "健康" },
-    { tag: "sports", label: "体育" },
-    { tag: "jobs", label: "招聘" }
+    { tag: "ai", labelZh: "AI" },
+    { tag: "novel", labelZh: "小说" },
+    { tag: "anime", labelZh: "动漫" },
+    { tag: "video", labelZh: "视频" },
+    { tag: "music", labelZh: "音乐" },
+    { tag: "games", labelZh: "游戏" },
+    { tag: "news", labelZh: "新闻" },
+    { tag: "education", labelZh: "学习" },
+    { tag: "science", labelZh: "科学" },
+    { tag: "tools", labelZh: "工具" },
+    { tag: "dev", labelZh: "开发" },
+    { tag: "art", labelZh: "艺术" },
+    { tag: "maps", labelZh: "地图" },
+    { tag: "shopping", labelZh: "购物" },
+    { tag: "search", labelZh: "搜索" },
+    { tag: "social", labelZh: "社交" },
+    { tag: "finance", labelZh: "金融" },
+    { tag: "cloud", labelZh: "云服务" },
+    { tag: "office", labelZh: "办公" },
+    { tag: "gov", labelZh: "政务" },
+    { tag: "health", labelZh: "健康" },
+    { tag: "sports", labelZh: "体育" },
+    { tag: "jobs", labelZh: "招聘" }
   ];
 
   function el(tag, attrs = {}, children = []) {
@@ -369,12 +369,13 @@
     return row;
   }
 
-  function chipToggle(label, initial, onChange) {
-    const id = `chip-${label}-${Math.random().toString(16).slice(2)}`;
+  function chipToggle(displayLabel, key, initial, onChange) {
+    const safeKey = String(key ?? "chip").toLowerCase().replace(/[^a-z0-9_-]+/g, "-");
+    const id = `chip-${safeKey}-${Math.random().toString(16).slice(2)}`;
     const input = /** @type {HTMLInputElement} */ (el("input", { type: "checkbox", id }));
     input.checked = initial;
     input.addEventListener("change", () => onChange(input.checked));
-    const chip = el("label", { class: "chip", for: id }, [input, el("span", {}, [label])]);
+    const chip = el("label", { class: "chip", for: id }, [input, el("span", {}, [displayLabel])]);
     return chip;
   }
 
@@ -495,14 +496,14 @@
     );
     controls.append(safeMode, confirmBeforeOpen, openInNewTab, includeCustom, treatCustomAsSafe, el("hr"));
 
-    controls.append(el("div", { class: "label" }, ["随机范围："]));
+    controls.append(el("div", { class: "label" }, ["随机范围（括号内为模式）："]));
     const biasRow = el("div", { class: "segmented" }, []);
-    const biasGlobal = segmentedButton("全网站点", state.biasMode === "global", () => {
+    const biasGlobal = segmentedButton("全网站点 (global)", state.biasMode === "global", () => {
       state.biasMode = "global";
       setSegmentActive(biasRow, 0);
       persistState(state);
     });
-    const biasZh = segmentedButton("偏向中文站点", state.biasMode === "zh", () => {
+    const biasZh = segmentedButton("偏向中文站点 (zh)", state.biasMode === "zh", () => {
       state.biasMode = "zh";
       setSegmentActive(biasRow, 1);
       persistState(state);
@@ -511,9 +512,9 @@
     setSegmentActive(biasRow, state.biasMode === "zh" ? 1 : 0);
     controls.append(biasRow);
 
-    controls.append(el("div", { class: "label", style: "margin-top:12px" }, ["类别（可选）："]));
+    controls.append(el("div", { class: "label", style: "margin-top:12px" }, ["类别（可选，括号内为 tag）："]));
     const categories = el("div", { class: "chips" }, []);
-    const allCatChip = chipToggle("全部", state.categoryTags.size === 0, (checked) => {
+    const allCatChip = chipToggle("全部 (all)", "all", state.categoryTags.size === 0, (checked) => {
       if (checked) {
         state.categoryTags.clear();
         for (const node of categories.querySelectorAll("label.chip")) {
@@ -526,8 +527,8 @@
       }
     });
     categories.append(allCatChip);
-    for (const { tag, label } of CATEGORY_TAGS) {
-      const chip = chipToggle(label, state.categoryTags.has(tag), (checked) => {
+    for (const { tag, labelZh } of CATEGORY_TAGS) {
+      const chip = chipToggle(`${labelZh} (${tag})`, tag, state.categoryTags.has(tag), (checked) => {
         const allInput = allCatChip.querySelector("input");
         if (checked) state.categoryTags.add(tag);
         else state.categoryTags.delete(tag);
@@ -544,16 +545,18 @@
         el("code", {}, ["#novel"]),
         " / ",
         el("code", {}, ["#anime"]),
-        "）。"
+        "）。页面按钮列表在 ",
+        el("code", {}, ["CATEGORY_TAGS"]),
+        " 里维护。"
       ])
     );
 
     controls.append(el("hr"));
 
-    controls.append(el("div", { class: "label" }, ["排除内容："]));
+    controls.append(el("div", { class: "label" }, ["排除内容（括号内为 tag）："]));
     const excludes = el("div", { class: "chips" }, []);
-    for (const { tag, label } of ALL_EXCLUDABLE_TAGS) {
-      const chip = chipToggle(label, state.excludedTags.has(tag), (checked) => {
+    for (const { tag, labelZh } of ALL_EXCLUDABLE_TAGS) {
+      const chip = chipToggle(`${labelZh} (${tag})`, tag, state.excludedTags.has(tag), (checked) => {
         if (checked) state.excludedTags.add(tag);
         else state.excludedTags.delete(tag);
         persistState(state);
@@ -563,26 +566,31 @@
     controls.append(excludes);
 
     controls.append(el("hr"));
-    controls.append(el("div", { class: "label" }, ["自定义列表（每行一个网址/域名，可带 #tag）："]));
-    const textarea = /** @type {HTMLTextAreaElement} */ (
-      el("textarea", {
-        class: "textarea",
-        placeholder: "例如：\nhttps://example.com\n#novel #zh https://example.com\nnews.ycombinator.com"
-      })
+    controls.append(el("div", { class: "label" }, ["自定义站点库（按分类分区添加）："]));
+    controls.append(
+      el("div", { class: "muted small" }, [
+        "把链接粘贴到对应分类里即可自动归类；括号内是英文 tag。也可使用“高级导入”手动写 ",
+        el("code", {}, ["#tag"]),
+        "。"
+      ])
     );
-    const customButtons = el("div", { class: "buttons" }, []);
-    const importBtn = el("button", { class: "secondary", type: "button" }, ["导入到自定义列表"]);
-    const clearBtn = el("button", { class: "ghost", type: "button" }, ["清空自定义列表"]);
-    const customCount = el("div", { class: "muted small" }, []);
-    function refreshCustomCount() {
-      customCount.textContent = `自定义链接数：${state.customSites.sites.length}`;
-    }
-    refreshCustomCount();
 
-    importBtn.addEventListener("click", () => {
-      const parsed = parseUrlsFromText(textarea.value);
-      if (parsed.length === 0) return;
-      const merged = [...state.customSites.sites, ...parsed].reduce((acc, s) => {
+    const customSummary = el("div", { class: "muted small", style: "margin-top:8px" }, []);
+    const clearAllCustomBtn = el("button", { class: "ghost", type: "button" }, ["清空全部自定义站点"]);
+    const customTopRow = el("div", { class: "buttons", style: "margin-top:10px" }, [clearAllCustomBtn]);
+    controls.append(customTopRow, customSummary);
+
+    /** @type {Map<string, HTMLElement>} */
+    const customCountNodes = new Map();
+
+    function upsertCustomSites(newSites, extraTag) {
+      const tagged = newSites.map((s) => {
+        const nextTags = new Set([...(s.tags ?? [])]);
+        if (extraTag) nextTags.add(extraTag);
+        return { ...s, tags: [...nextTags] };
+      });
+
+      const merged = [...state.customSites.sites, ...tagged].reduce((acc, s) => {
         const existing = acc.find((x) => x.url === s.url);
         if (!existing) {
           acc.push(s);
@@ -595,16 +603,96 @@
       }, []);
       state.customSites.sites = merged;
       saveCustomSites(state.customSites.sites);
-      refreshCustomCount();
+      refreshCustomUi();
+    }
+
+    function countCustomByTag(tag) {
+      return state.customSites.sites.filter((s) => (s.tags ?? []).includes(tag)).length;
+    }
+
+    function refreshCustomUi() {
+      customSummary.textContent = `自定义站点数：${state.customSites.sites.length}`;
+      for (const { tag } of CATEGORY_TAGS) {
+        const node = customCountNodes.get(tag);
+        if (node) node.textContent = String(countCustomByTag(tag));
+      }
+    }
+
+    clearAllCustomBtn.addEventListener("click", () => {
+      state.customSites.sites = [];
+      saveCustomSites([]);
+      refreshCustomUi();
+    });
+
+    const customSections = el("div", { class: "custom-sections" }, []);
+    for (const { tag, labelZh } of CATEGORY_TAGS) {
+      const details = el("details", { class: "details" }, []);
+      const countNode = el("span", { class: "muted small" }, ["0"]);
+      customCountNodes.set(tag, countNode);
+      const summary = el("summary", { class: "details-summary" }, [
+        `${labelZh} (${tag})`,
+        " · 已添加 ",
+        countNode,
+        " 个"
+      ]);
+
+      const ta = /** @type {HTMLTextAreaElement} */ (
+        el("textarea", {
+          class: "textarea textarea-sm",
+          placeholder: "每行一个网址/域名（可选 #zh 等 tag）\n例如：\nexample.com\n#zh example.com"
+        })
+      );
+      const addBtn = el("button", { class: "secondary", type: "button" }, ["添加到此分类"]);
+      const status = el("div", { class: "muted small" }, [""]);
+      addBtn.addEventListener("click", () => {
+        const parsed = parseUrlsFromText(ta.value);
+        if (parsed.length === 0) {
+          status.textContent = "没有识别到有效网址。";
+          return;
+        }
+        upsertCustomSites(parsed, tag);
+        status.textContent = `已添加 ${parsed.length} 条到 ${labelZh}。`;
+        ta.value = "";
+      });
+
+      details.append(summary, ta, el("div", { class: "buttons", style: "margin-top:10px" }, [addBtn]), status);
+      customSections.append(details);
+    }
+    controls.append(customSections);
+
+    const advanced = el("details", { class: "details", style: "margin-top:12px" }, []);
+    const advancedSummary = el("summary", { class: "details-summary" }, ["高级导入（手动 #tag）"]);
+    const textarea = /** @type {HTMLTextAreaElement} */ (
+      el("textarea", {
+        class: "textarea textarea-sm",
+        placeholder:
+          "每行一个网址/域名，可带 #tag\n例如：\n#novel #zh qidian.com\n#anime bangumi.tv\n#adult example.com"
+      })
+    );
+    const advancedButtons = el("div", { class: "buttons", style: "margin-top:10px" }, []);
+    const importBtn = el("button", { class: "secondary", type: "button" }, ["导入并按行内 tag 归类"]);
+    const clearBtn = el("button", { class: "ghost", type: "button" }, ["清空输入框"]);
+    const advancedStatus = el("div", { class: "muted small" }, [""]);
+
+    importBtn.addEventListener("click", () => {
+      const parsed = parseUrlsFromText(textarea.value);
+      if (parsed.length === 0) {
+        advancedStatus.textContent = "没有识别到有效网址。";
+        return;
+      }
+      upsertCustomSites(parsed, null);
+      advancedStatus.textContent = `已导入 ${parsed.length} 条。`;
       textarea.value = "";
     });
     clearBtn.addEventListener("click", () => {
-      state.customSites.sites = [];
-      saveCustomSites([]);
-      refreshCustomCount();
+      textarea.value = "";
+      advancedStatus.textContent = "";
     });
-    customButtons.append(importBtn, clearBtn);
-    controls.append(textarea, customButtons, customCount);
+    advancedButtons.append(importBtn, clearBtn);
+    advanced.append(advancedSummary, textarea, advancedButtons, advancedStatus);
+    controls.append(advanced);
+
+    refreshCustomUi();
 
     const primary = el("button", { class: "primary", type: "button" }, ["给我来一个随机网站"]);
     const secondary = el("button", { class: "secondary", type: "button" }, ["只随机一个链接（不打开）"]);

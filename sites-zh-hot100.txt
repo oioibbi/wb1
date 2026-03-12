@@ -1,0 +1,105 @@
+# Hot sites in China (Top 100) with tags.
+# Source: Semrush "Top websites in China (All industries)".
+# Format: one domain/URL per line, optional #tags. Use #zh to mark Chinese-language bias (-> lang-zh).
+
+#search google.com
+#search bing.com
+#video youtube.com
+#zh #news msn.cn
+#ai #tools chatgpt.com
+#search google.com.hk
+#zh #ai deepseek.com
+#dev github.com
+#zh #video #social douyin.com
+#social facebook.com
+#zh #office #tools feishu.cn
+#zh #ai doubao.com
+#social whatsapp.com
+#zh #shopping taobao.com
+#tools microsoft.com
+#zh #social #shopping xiaohongshu.com
+#social instagram.com
+#social x.com
+#zh #email #news 163.com
+#zh #social weibo.com
+#zh #cloud #dev aliyun.com
+#zh #shopping jd.com
+#zh #tools tencent.com
+#shopping amazon.com
+#education wikipedia.org
+#zh #search hao123.com
+#social reddit.com
+#zh #tools #search 360.com
+#zh #shopping 1688.com
+#zh #games woa.com
+#zh #video #games douyu.com
+#email live.com
+#zh #education cnki.net
+#social #art pinterest.com
+#social #tools linkedin.com
+#zh #video #games huya.com
+#zh #shopping tmall.com
+#zh #social #art douban.com
+#zh #office #tools larkoffice.com
+#video #social tiktok.com
+#zh #search #tools quark.cn
+#zh #office #tools dingtalk.com
+#zh #office #tools kdocs.cn
+#health #science nih.gov
+#science #education sciencedirect.com
+#zh alibaba-inc.com
+#zh #news #video sohu.com
+#zh #finance #shopping alipay.com
+#shopping #tools apple.com
+#zh #art huaban.com
+#zh #ai qianwen.com
+#search yahoo.com
+#zh bytedance.net
+#zh #ai kimi.com
+#video netflix.com
+#zh #news sina.com.cn
+#zh #shopping alibaba.com
+#zh #finance #news eastmoney.com
+#ai openai.com
+#adult #video pornhub.com
+#zh #tools #video jianying.com
+#zh #education #tools youdao.com
+#zh #dev cnblogs.com
+#tools #art canva.com
+#science #education elsevier.com
+#zh #video iqiyi.com
+#games gamer520.com
+#zh #tools lingxing.com
+#zh #shopping #tools huawei.com
+#ai grok.com
+#zh #dev #tools 52pojie.cn
+#zh #gov chinatax.gov.cn
+#zh #dev juejin.cn
+#zh #dev #tools yuque.com
+#zh #search so.com
+#news msn.com
+#news yahoo.co.jp
+#zh #dev gitee.com
+#zh #social #sports hupu.com
+#zh #games 3dmgame.com
+#zh #news #social toutiao.com
+#zh #shopping #tools smzdm.com
+#zh #education chaoxing.com
+#zh #search sogou.com
+#office #tools office.com
+#social discord.com
+#zh #games #news gamersky.com
+#science #education wiley.com
+#zh #finance antfin.com
+#zh #video youku.com
+#shopping #tools shopify.com
+#zh #shopping temu.com
+#zh #shopping sankuai.com
+#zh #search #tools 2345.com
+#tools #art figma.com
+#zh #finance #social xueqiu.com
+#zh #shopping aliexpress.com
+#zh #tools qcc.com
+#zh #social #games nga.cn
+#zh #jobs zhipin.com
+

@@ -1,64 +1,39 @@
-# 随机网站（MVP）
+# 随机网站（GitHub Pages）
 
-这个项目做的是一个“随机打开网站”的小网页（类似早年的 StumbleUpon / The Useless Web 的感觉）。
+一个纯静态网页：随机抽取网站并跳转，支持「偏向中文站点」与「类别筛选」。
 
-重要限制：**不可能真的从“互联网上任意一个网站”里均匀随机**，因为你必须先有一份“可抽样的网站库”。本项目的 MVP 用的是内置 allow-list（并提供“安全模式/排除标签/打开前确认”等保护措施），你可以把站点库换成更大的列表来更接近你的目标。
+## 文件说明
 
-## 安全提示（强烈建议保留）
+- `index.html`：入口（已内联 CSS，避免 Pages 上路径/大小写导致样式丢失）
+- `app.js`：全部逻辑（无构建、无依赖）
+- `sites-zh-hot100.txt`：热门中文/中国用户常用 Top 100（带 `#tag`，自动加载）
+- `sites-extra.txt`：你自己的扩展大列表（建议 1000+ 行，自动加载）
+- `style.css`：样式参考（实际以 `index.html` 内联为准）
 
-- “安全模式”只是一种**保守的 allow-list**策略，不可能 100% 保证内容安全或无恶意跳转。
-- 默认开启“打开前确认 / 新标签页打开”，避免误触把本页覆盖、也方便你看清域名再决定要不要进。
+## 本地打开
 
-## 随机范围与类别
+直接双击打开 `index.html` 即可使用。
 
-- “随机范围”支持：`全网站点` / `偏向中文站点`（会优先抽取带 `lang-zh` 标签或 `.cn` 域名的站点）
-- “类别”支持多选：例如 `小说`、`动漫` 等；你以后要加新类别，只要给站点增加对应 tag 即可
+## 扩充网站列表（推荐）
 
-## 本地运行
+把网站放进仓库根目录的文本文件里，每行一个域名或 URL，可带 `#tag`：
 
-这是一个纯静态网页，不需要 Node/Vite。
+- `example.com`
+- `https://example.com/path`
+- `#novel #zh example.com`（`#zh/#cn/#中文` 会归一化为 `lang-zh`）
+- `#adult pornhub.com`
 
-- 直接双击打开 `index.html` 也能用（不依赖本地服务器）。
-- 如果你想用本地服务器（更接近线上环境），可以用 Python：
+然后提交并推送到 GitHub，等 GitHub Pages 自动部署后刷新网页即可生效。
 
-```bash
-python -m http.server 5173
-```
+## 类别扩展
 
-然后打开 `http://localhost:5173/`。
+类别本质上就是 tag：
+- 给站点加上 `#anime/#novel/#games/#news/...` 等 tag
+- 如果你想让某个新 tag 出现在页面的「类别」按钮里，在 `app.js` 里把它加入 `CATEGORY_TAGS`
 
-## 自定义站点库
+## GitHub Pages 部署
 
-编辑 `src/sites.js` 里的 `SITES`，或在网页里直接导入自定义链接列表（会存到浏览器的 localStorage）。
+Settings → Pages：
+- Source：Deploy from a branch
+- Branch：`main` / `/(root)`
 
-### 导入时给链接打标签（推荐）
-
-在“自定义列表”里每行可以写：
-
-- `https://example.com`
-- `#novel #zh https://example.com`（会自动把 `#zh` 归一化为 `lang-zh`）
-
-你可以用任何你想要的 tag（比如 `#anime`、`#novel`、`#music`），之后就能在“类别”里加对应的选项。
-
-要让新 tag 出现在 UI 的“类别”里：把它加到 `src/main.js` 的 `CATEGORY_TAGS` 里（一行一个 `{ tag, label }`）。
-
-建议：
-- 站点越多，越“随机”；但越难保证安全/可访问。
-- 默认安全模式只会抽取 `safe: true` 的站点。
-- 可以用 `tags` 做更细的过滤。
-
-## 更接近“任意网站”的做法
-
-你需要一个“大站点列表”（例如 10k、100k 甚至更多的域名/URL），然后：
-- 直接在页面的“自定义列表”里粘贴/导入（每行一个域名或 URL）
-- 或者把它做成 `src/sites.js` 的一部分（适合你想长期托管）
-
-注意：浏览器的 localStorage 有容量上限，导入特别大的列表可能存不下；这时更推荐直接改 `src/sites.js` 并部署。
-
-## 部署
-
-这是一个纯静态站点：把整个文件夹部署到任何静态托管都行（例如 GitHub Pages / Cloudflare Pages / Netlify / Vercel 静态站点）。
-
-- 如果平台需要你填“构建命令/输出目录”：通常可以留空（因为不需要构建）。
-
-备注：为了避免 GitHub Pages 上路径/大小写导致的样式丢失，样式已内联在 `index.html`；`src/style.css` 仅作为参考保留。

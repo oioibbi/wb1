@@ -8,7 +8,7 @@
   /**
    * Built-in allow-list.
    * You can edit this list, import custom sites in the UI,
-   * or provide `sites-extra.txt` in the repo root for large lists.
+   * or provide `sites-zh-hot100.txt` / `sites-extra.txt` in the repo root for larger lists.
    */
   const BUILTIN_SITES = [
     // Chinese / Zh sites (tagged with lang-zh for 偏向中文站点)
@@ -89,6 +89,7 @@
     categoryTags: new Set(),
     customSites: { sites: [] },
     recentUrls: [],
+    hotSites: { sites: [] },
     extraSites: { sites: [] }
   };
 
@@ -103,6 +104,7 @@
   ];
 
   const CATEGORY_TAGS = [
+    { tag: "ai", label: "AI" },
     { tag: "novel", label: "小说" },
     { tag: "anime", label: "动漫" },
     { tag: "video", label: "视频" },
@@ -115,7 +117,16 @@
     { tag: "dev", label: "开发" },
     { tag: "art", label: "艺术" },
     { tag: "maps", label: "地图" },
-    { tag: "shopping", label: "购物" }
+    { tag: "shopping", label: "购物" },
+    { tag: "search", label: "搜索" },
+    { tag: "social", label: "社交" },
+    { tag: "finance", label: "金融" },
+    { tag: "cloud", label: "云服务" },
+    { tag: "office", label: "办公" },
+    { tag: "gov", label: "政务" },
+    { tag: "health", label: "健康" },
+    { tag: "sports", label: "体育" },
+    { tag: "jobs", label: "招聘" }
   ];
 
   function el(tag, attrs = {}, children = []) {
@@ -395,7 +406,7 @@
   }
 
   function getAllSites(state) {
-    const base = [...BUILTIN_SITES, ...state.extraSites.sites];
+    const base = [...BUILTIN_SITES, ...state.hotSites.sites, ...state.extraSites.sites];
     if (!state.includeCustomSites) return base;
     const customSites = state.customSites.sites.map((s) => ({
       ...s,
@@ -404,20 +415,38 @@
     return [...base, ...customSites];
   }
 
-  async function loadExtraSitesFromFile() {
+  async function loadSitesFromTextFile(path) {
     // Only works when hosted (http/https). `file://` cannot reliably fetch.
     if (location.protocol !== "http:" && location.protocol !== "https:") return [];
     try {
-      // cache-bust so updates appear quickly after deploy
-      const res = await fetch(`./sites-extra.txt?v=${Date.now()}`, { cache: "no-store" });
+      const res = await fetch(`${path}?v=${Date.now()}`, { cache: "no-store" });
       if (!res.ok) return [];
       const text = await res.text();
       const parsed = parseUrlsFromText(text);
-      // External lists default to `safe: true` so they work with 安全模式.
-      // Use excluded tags (adult/gambling/etc) to control sensitive categories.
-      return parsed.map((s) => ({ url: s.url, tags: s.tags ?? ["custom"], safe: true }));
+      // remove internal marker tag "custom" (we use tags only for filtering)
+      return parsed.map((s) => ({
+        url: s.url,
+        tags: (s.tags ?? []).filter((t) => t !== "custom"),
+        safe: true
+      }));
     } catch {
       return [];
+    }
+  }
+
+  function mergeSitesByUrl(targetSites, incomingSites, seen) {
+    for (const s of incomingSites) {
+      if (!s?.url || typeof s.url !== "string") continue;
+      if (!seen.has(s.url)) {
+        seen.add(s.url);
+        targetSites.push(s);
+        continue;
+      }
+      const existing = targetSites.find((x) => x.url === s.url);
+      if (!existing) continue;
+      const nextTags = new Set([...(existing.tags ?? []), ...(s.tags ?? [])]);
+      existing.tags = [...nextTags];
+      existing.safe = Boolean(existing.safe) || Boolean(s.safe);
     }
   }
 
@@ -664,31 +693,37 @@
     const footer = el("p", { class: "footer muted" }, [
       "内置站点 ",
       String(BUILTIN_SITES.length),
-      " 个；外部站点 ",
+      " 个；热门中文 ",
+      el("span", { id: "hot-count" }, [String(state.hotSites.sites.length)]),
+      " 个；扩展列表 ",
       el("span", { id: "extra-count" }, [String(state.extraSites.sites.length)]),
-      " 个；自定义站点 ",
+      " 个；自定义 ",
       String(state.customSites.sites.length),
       " 个。"
     ]);
 
     app.append(title, subtitle, lastPick, controls, buttons, result, confirmRow, footer);
 
-    // Load large external lists from `sites-extra.txt` (hosted only).
-    loadExtraSitesFromFile().then((extra) => {
-      if (!Array.isArray(extra) || extra.length === 0) return;
-      // Merge & de-dupe against builtin/custom by url.
-      const seen = new Set(BUILTIN_SITES.map((s) => s.url));
-      for (const s of state.customSites.sites) seen.add(s.url);
-      const merged = [];
-      for (const s of extra) {
-        if (!s?.url || typeof s.url !== "string") continue;
-        if (seen.has(s.url)) continue;
-        seen.add(s.url);
-        merged.push(s);
+    // Merge & de-dupe against builtin/custom by url.
+    const seen = new Set(BUILTIN_SITES.map((s) => s.url));
+    for (const s of state.customSites.sites) seen.add(s.url);
+
+    // Load curated hot CN list first (tagged and categorized).
+    loadSitesFromTextFile("./sites-zh-hot100.txt").then((hot) => {
+      if (Array.isArray(hot) && hot.length > 0) {
+        mergeSitesByUrl(state.hotSites.sites, hot, seen);
+        const node = footer.querySelector("#hot-count");
+        if (node) node.textContent = String(state.hotSites.sites.length);
       }
-      state.extraSites.sites = merged;
-      const node = footer.querySelector("#extra-count");
-      if (node) node.textContent = String(state.extraSites.sites.length);
+
+      // Then load user-provided large list.
+      loadSitesFromTextFile("./sites-extra.txt").then((extra) => {
+        if (!Array.isArray(extra) || extra.length === 0) return;
+        // Merge; if url already exists in hot list, union tags.
+        mergeSitesByUrl(state.extraSites.sites, extra, seen);
+        const node = footer.querySelector("#extra-count");
+        if (node) node.textContent = String(state.extraSites.sites.length);
+      });
     });
   }
 

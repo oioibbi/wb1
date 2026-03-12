@@ -413,8 +413,9 @@
       if (!res.ok) return [];
       const text = await res.text();
       const parsed = parseUrlsFromText(text);
-      // External lists default to not-safe; users can disable 安全模式 to include them.
-      return parsed.map((s) => ({ url: s.url, tags: s.tags ?? ["custom"], safe: false }));
+      // External lists default to `safe: true` so they work with 安全模式.
+      // Use excluded tags (adult/gambling/etc) to control sensitive categories.
+      return parsed.map((s) => ({ url: s.url, tags: s.tags ?? ["custom"], safe: true }));
     } catch {
       return [];
     }
